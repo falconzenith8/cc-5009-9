@@ -1,17 +1,10 @@
-import { chromium } from 'playwright';
 import fs from 'node:fs';
+import { launchBrowser } from './lib/browser.mjs';
 
 const url = process.argv[ 2 ] || 'http://localhost:4173/';
 const out = process.argv[ 3 ] || '/workspace/shots/shot.png';
 
-const browser = await chromium.launch( {
-  args: [
-    '--use-angle=swiftshader',
-    '--enable-unsafe-swiftshader',
-    '--ignore-gpu-blocklist',
-    '--disable-gpu-sandbox'
-  ]
-} );
+const browser = await launchBrowser();
 const page = await browser.newPage( { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 } );
 
 const logs = [];

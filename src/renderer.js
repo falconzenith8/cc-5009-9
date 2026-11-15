@@ -10,20 +10,27 @@ import {
 } from './shaders/passes.js';
 import { FULLSCREEN_VERT } from './shaders/common.js';
 import { buildScene } from './scene.js';
+import { PARAM_SCHEMA } from './state.js';
 
 export const CHANNELS = [
   'final', 'surface', 'diffuse', 'specular', 'scatter', 'normalShade',
   'albedo', 'normal', 'depth', 'thickness', 'mask', 'objectid'
 ];
 
-const TAPS = { low: 8, med: 16, high: 32 };
+export const TAPS = { low: 8, med: 16, high: 32 };
 // Kernel radius as a multiple of the scattering length. Fixed for live and
 // reference paths so the two are compared on equal footing.
-const RADIUS_SCALE = 1.8;
+export const RADIUS_SCALE = 1.8;
 
 // One world unit is 10 mm at model scale 1. This number is the bridge between
 // the physical scattering distance (authored in millimetres) and the render.
-const WORLD_PER_MM = 0.1;
+export const WORLD_PER_MM = 0.1;
+
+// Kernel uniforms initialise from the schema defaults, so the values a fresh
+// renderer shows before the first state sync can never drift from the
+// documented defaults (docs/model-assumptions.md).
+const P = {};
+for ( const [ key, def ] of Object.entries( PARAM_SCHEMA ) ) P[ key ] = def.default;
 
 function fsMaterial( fragmentShader, uniforms ) {
   return new THREE.ShaderMaterial( {
@@ -169,9 +176,9 @@ export class ScatterLab {
       uHeight: { value: 1 },
       uTanHalfFov: { value: 0.28 },
       uWorldPerMm: { value: WORLD_PER_MM },
-      uMaxThicknessMm: { value: 30 },
-      uDistanceMm: { value: 3.4 },
-      uThicknessResponse: { value: 0.7 }
+      uMaxThicknessMm: { value: P.maxThicknessMm },
+      uDistanceMm: { value: P.distanceMm },
+      uThicknessResponse: { value: P.thicknessResponse }
     } ) );
 
     this.blurQuad = new FullScreenQuad( fsMaterial( BLUR_FRAG, {
@@ -186,15 +193,15 @@ export class ScatterLab {
       uNear: { value: 0.1 },
       uFar: { value: 300 },
       uTanHalfFov: { value: 0.28 },
-      uSigmaWorld: { value: 0.45 },
+      uSigmaWorld: { value: P.distanceMm * WORLD_PER_MM },
       uWorldTol: { value: 0.5 },
-      uNormalTol: { value: 0.86 },
-      uObjectGate: { value: 1 },
+      uNormalTol: { value: P.normalTol },
+      uObjectGate: { value: P.objectGate ? 1 : 0 },
       uRadiusScale: { value: RADIUS_SCALE },
-      uThinBoost: { value: 0.55 },
+      uThinBoost: { value: P.thinBoost },
       uWorldPerMm: { value: WORLD_PER_MM },
-      uDistanceMm: { value: 3.4 },
-      uTaps: { value: 16 }
+      uDistanceMm: { value: P.distanceMm },
+      uTaps: { value: TAPS[ P.quality ] }
     } ) );
 
     this.compositeQuad = new FullScreenQuad( fsMaterial( COMPOSITE_FRAG, {
@@ -209,9 +216,10 @@ export class ScatterLab {
       uFar: { value: 300 },
       uHeight: { value: 1 },
       uTanHalfFov: { value: 0.28 },
-      uScatterOn: { value: 1 },
-      uStrength: { value: 0.72 },
-      uExposure: { value: 1 },
+      uScatterOn: { value: P.scatterOn ? 1 : 0 },
+      uStrength: { value: P.strength },
+      uExposure: { value: P.exposure },
+      uMaxThicknessMm: { value: P.maxThicknessMm },
       uShowRef: { value: 0 },
       uSplit: { value: 0.5 },
       uChannel: { value: 0 }
@@ -230,16 +238,16 @@ export class ScatterLab {
       uNear: { value: 0.1 },
       uFar: { value: 300 },
       uTanHalfFov: { value: 0.28 },
-      uSigmaWorld: { value: 0.45 },
+      uSigmaWorld: { value: P.distanceMm * WORLD_PER_MM },
       uWorldTol: { value: 0.5 },
-      uNormalTol: { value: 0.86 },
-      uObjectGate: { value: 1 },
+      uNormalTol: { value: P.normalTol },
+      uObjectGate: { value: P.objectGate ? 1 : 0 },
       uRadiusScale: { value: RADIUS_SCALE },
-      uThinBoost: { value: 0.55 },
+      uThinBoost: { value: P.thinBoost },
       uWorldPerMm: { value: WORLD_PER_MM },
-      uDistanceMm: { value: 3.4 },
-      uStrength: { value: 0.72 },
-      uExposure: { value: 1 }
+      uDistanceMm: { value: P.distanceMm },
+      uStrength: { value: P.strength },
+      uExposure: { value: P.exposure }
     } ) );
 
     this.copyQuad = new FullScreenQuad( fsMaterial( COPY_FRAG, {
@@ -562,6 +570,7 @@ export class ScatterLab {
     comp.uScatterOn.value = s.scatterOn ? 1 : 0;
     comp.uStrength.value = s.strength;
     comp.uExposure.value = s.exposure;
+    comp.uMaxThicknessMm.value = s.maxThicknessMm;
     comp.uShowRef.value = this.showCompare && this.referenceValid ? 1 : 0;
     comp.uChannel.value = CHANNELS.indexOf( s.channel );
     comp.uHeight.value = this.height;

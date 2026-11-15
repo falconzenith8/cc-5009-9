@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-11-15T17:08:15.284Z",
+  "artifacts": [
+    {
+      "file": "01-contrast-final.png",
+      "caption": "默认视角最终合成：薄边（耳片）与厚块（圆柱）对照"
+    },
+    {
+      "file": "02-contrast-thickness.png",
+      "caption": "厚度通道（mm）：薄边 ≈1–3 mm，厚块核心 ≈8–10 mm"
+    },
+    {
+      "file": "03-contrast-scatter.png",
+      "caption": "扩散光照通道：薄边暖亮、厚块乳浊"
+    },
+    {
+      "file": "04-section.svg",
+      "caption": "截面：扫描线 y=448 的厚度(mm)与发射亮度，标注过渡带与钳制线"
+    },
+    {
+      "file": "05-backlit-failure.png",
+      "caption": "失效·背光视角：可见表面近似不含透射，薄片背光不发光"
+    },
+    {
+      "file": "06-clamp-failure.png",
+      "caption": "失效·厚度钳制：maxThicknessMm=8 时厚核厚度被截为平台"
+    },
+    {
+      "file": "07-silhouette-fade.png",
+      "caption": "失效·轮廓衰减：剪影边缘扩散能量自然变暗（不归一到满强度）"
+    }
+  ],
+  "section": {
+    "row": 448,
+    "width": 1440
+  },
+  "backlit": {
+    "note": "theta += π，相机与主光源异侧"
+  }
+}

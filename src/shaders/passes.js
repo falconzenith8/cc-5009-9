@@ -254,6 +254,7 @@ uniform float uStrength;
 uniform float uExposure;
 uniform float uShowRef;
 uniform float uSplit;
+uniform float uMaxThicknessMm;
 uniform int uChannel;
 
 ${DEPTH_HELPERS}
@@ -319,7 +320,7 @@ void main() {
   } else if ( uChannel == 8 ) {
     col = vec3( clamp( 1.0 - g.x / 30.0, 0.0, 1.0 ) );
   } else if ( uChannel == 9 ) {
-    float t = clamp( g.a / 30.0, 0.0, 1.0 );
+    float t = clamp( g.a / max( uMaxThicknessMm, 1.0 ), 0.0, 1.0 );
     col = mix( vec3( 0.09, 0.13, 0.24 ), vec3( 0.98, 0.72, 0.36 ), t );
     col *= mix( 0.45, 1.0, g.b );
   } else if ( uChannel == 10 ) {

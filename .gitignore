@@ -29,3 +29,9 @@ __pycache__/
 .fonts/
 probe/
 shots/
+
+# Requested scattering contract examples and evidence are deliverables.
+!shots/
+shots/*
+!shots/assumptions/
+!shots/contract/

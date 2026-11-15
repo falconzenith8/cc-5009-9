@@ -1,5 +1,6 @@
 import { ScatterLab, CHANNELS } from './renderer.js';
 import { Panel } from './ui.js';
+import { runSelfcheck } from './selfcheck.js';
 import {
   defaultState, loadState, saveState, exportState, importState, PRESETS
 } from './state.js';
@@ -192,6 +193,14 @@ lab.renderFrame();
 document.getElementById( 'loading' ).classList.add( 'hidden' );
 requestAnimationFrame( loop );
 
+// Kernel self-check: wiring + non-default functional probes. Failures are
+// shown in the panel (失败反馈回蜡艺散射) and logged, never silently ignored.
+const selfcheckResults = runSelfcheck( lab );
+panel.setSelfcheck( selfcheckResults );
+for ( const c of selfcheckResults ) {
+  if ( ! c.pass ) console.error( `[selfcheck] ${c.name}: ${c.detail}` );
+}
+
 // exposed for automated verification and debugging; not used by the UI path
 window.__lab = {
   lab, state, panel, CHANNELS,
@@ -199,6 +208,12 @@ window.__lab = {
   resize,
   requestReference: () => { lab.requestReference(); lab.renderFrame(); },
   setCompare: ( on ) => { lab.setCompare( on ); lab.renderFrame(); },
+  selfcheck: () => {
+    const results = runSelfcheck( lab );
+    panel.setSelfcheck( results );
+    return results;
+  },
+  selfcheckResults,
   readFinal: () => lab.readFinal(),
   readTarget: ( name, attachment ) => {
     const map = {

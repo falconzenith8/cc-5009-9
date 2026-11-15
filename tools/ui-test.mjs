@@ -1,8 +1,6 @@
-import { chromium } from 'playwright';
+import { launchBrowser } from './lib/browser.mjs';
 
-const browser = await chromium.launch( {
-  args: [ '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-sandbox' ]
-} );
+const browser = await launchBrowser();
 const page = await browser.newPage( { viewport: { width: 1440, height: 900 } } );
 await page.goto( 'http://localhost:4173/', { waitUntil: 'networkidle' } );
 await page.waitForTimeout( 2200 );

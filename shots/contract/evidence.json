@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-11-15T17:06:18.183Z",
+  "probesUseNonDefaultValues": true,
+  "evidence": {
+    "A_内核自检全部通过并上屏": {
+      "pass": true,
+      "detail": "8/8 通过；面板标记「8 项通过」"
+    },
+    "B1_厚度响应·薄边增亮": {
+      "pass": true,
+      "detail": "薄边（光学厚度<1，41116px）发射 ×1.701（响应 0→1，非默认值对）"
+    },
+    "B2_厚度响应·厚块乳浊": {
+      "pass": true,
+      "detail": "厚块（光学厚度>2.5，14104px）发射 ×0.740（响应 0→1）"
+    },
+    "B3_厚度响应·薄边转暖": {
+      "pass": true,
+      "detail": "薄片发射 R/B 2.219 → 3.266"
+    },
+    "C1_散射距离单位_mm→像素半径线性": {
+      "pass": true,
+      "detail": "半径 85.42px @2mm → 341.67px @8mm，比值 4.000"
+    },
+    "C2_σ(世界单位)_=_mm_×_0.1_×_缩放": {
+      "pass": true,
+      "detail": "uSigmaWorld 0.2 → 0.8（modelScale=1）"
+    },
+    "D1_厚块中位厚度≈几何毫米": {
+      "pass": true,
+      "detail": "圆柱 p50 = 7.34 mm（几何直径 ≈ 8.8–10 mm）"
+    },
+    "D2_薄边显著薄于厚块": {
+      "pass": true,
+      "detail": "薄片 p50 = 1.56 mm vs 厚块 p50 = 7.34 mm"
+    },
+    "D3_厚度钳制于_maxThicknessMm": {
+      "pass": true,
+      "detail": "上限 8mm 时厚块 p90 = 8.00 mm（原 10.16 mm）"
+    },
+    "E1_薄片增益作用于薄边": {
+      "pass": true,
+      "detail": "薄边扩散能量变化 1.55%（增益 0→1.2）"
+    },
+    "E2_薄片增益不波及厚块核心": {
+      "pass": true,
+      "detail": "厚块扩散能量变化 0.55%（应远小于薄边）"
+    },
+    "F1_预览窗口·厚度滑杆生效": {
+      "pass": true,
+      "detail": "厚度响应→1（界面读数 1.00），蜡面平均差 0.0140（112601px）"
+    },
+    "F2_预览窗口·薄边透光转暖可见": {
+      "pass": true,
+      "detail": "薄片 R/B 1.691 → 1.735"
+    },
+    "F3_预览窗口·拖动旋转蜡件": {
+      "pass": true,
+      "detail": "theta 0.34→-0.86，旋转后蜡面平均差 0.1889"
+    },
+    "G_探针后默认值完整复原": {
+      "pass": true,
+      "detail": "distanceMm=3.4 thicknessResponse=0.72 maxThicknessMm=30 thinBoost=0.55"
+    },
+    "H_页面无脚本错误": {
+      "pass": true,
+      "detail": "无"
+    }
+  }
+}

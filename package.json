@@ -9,6 +9,8 @@
     "build": "vite build",
     "preview": "vite preview --port 4173",
     "font:subset": "node tools/subset-font.mjs",
+    "contract": "node tools/check-contract.mjs",
+    "assumptions": "node tools/verify-contract.mjs && node tools/assumptions.mjs",
     "verify": "node tools/verify.mjs",
     "shot": "node tools/shot.mjs"
   },

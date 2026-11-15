@@ -1,24 +1,119 @@
 // Persistent state, presets, and the save/restore contract for the lab.
+//
+// PARAM_SCHEMA is the single source of truth for the scattering kernel's
+// parameters: defaults, ranges, units, UI labels and the DOM ids of the
+// generated controls. The contract doc (docs/model-assumptions.md) is checked
+// against this table by tools/check-contract.mjs — renaming a key here without
+// updating the doc fails the check.
 
 export const PARAM_SCHEMA = {
-  scatterOn: { type: 'bool', default: true },
-  distanceMm: { type: 'number', default: 3.4, min: 0.5, max: 20, step: 0.1 },
-  strength: { type: 'number', default: 0.85, min: 0, max: 1, step: 0.01 },
-  thicknessResponse: { type: 'number', default: 0.72, min: 0, max: 1, step: 0.01 },
-  maxThicknessMm: { type: 'number', default: 30, min: 4, max: 80, step: 1 },
-  thinBoost: { type: 'number', default: 0.55, min: 0, max: 1.5, step: 0.01 },
-  quality: { type: 'enum', values: [ 'low', 'med', 'high' ], default: 'med' },
-  objectGate: { type: 'bool', default: true },
-  depthTol: { type: 'number', default: 0.42, min: 0, max: 1.5, step: 0.01 },
-  normalTol: { type: 'number', default: 0.82, min: 0.4, max: 0.99, step: 0.01 },
-  modelScale: { type: 'number', default: 1, min: 0.45, max: 2.2, step: 0.01 },
-  exposure: { type: 'number', default: 1, min: 0.3, max: 2.4, step: 0.01 },
-  resolutionScale: { type: 'number', default: 1, min: 0.5, max: 1.75, step: 0.05 },
-  channel: { type: 'enum', values: [
-    'final', 'surface', 'diffuse', 'specular', 'scatter', 'normalShade',
-    'albedo', 'normal', 'depth', 'thickness', 'mask', 'objectid'
-  ], default: 'final' },
-  preset: { type: 'enum', values: [ 'pale', 'amber', 'rose', 'ivory' ], default: 'pale' }
+  scatterOn: {
+    type: 'bool', default: true,
+    unit: '—',
+    label: '启用次表面散射'
+  },
+  distanceMm: {
+    type: 'number', default: 3.4, min: 0.5, max: 20, step: 0.1,
+    unit: 'mm', digits: 1, suffix: 'mm',
+    label: '散射距离',
+    hint: '以物理毫米为单位的平均自由程；渲染时按场景尺度换算到世界单位，再投影到屏幕像素。',
+    control: { section: 'diffusionFields', input: 'distRange', out: 'distOut' }
+  },
+  strength: {
+    type: 'number', default: 0.85, min: 0, max: 1, step: 0.01,
+    unit: '无量纲', digits: 2,
+    label: '散射强度',
+    control: { section: 'diffusionFields', input: 'strengthRange', out: 'strengthOut' }
+  },
+  thicknessResponse: {
+    type: 'number', default: 0.72, min: 0, max: 1, step: 0.01,
+    unit: '无量纲', digits: 2,
+    label: '厚度响应',
+    hint: '薄处透光、厚处更乳浊：散射能量与扩散半径都随局部厚度响应。光学厚度 0.25–2.5 为过渡带。',
+    control: { section: 'diffusionFields', input: 'thicknessRange', out: 'thicknessOut' }
+  },
+  maxThicknessMm: {
+    type: 'number', default: 30, min: 4, max: 80, step: 1,
+    unit: 'mm', digits: 0, suffix: 'mm',
+    label: '厚度上限',
+    hint: '视线厚度估计的钳制值（毫米）；超过上限的厚核按上限参与光学厚度计算。',
+    control: { section: 'diffusionFields', input: 'maxThicknessRange', out: 'maxThicknessOut' }
+  },
+  thinBoost: {
+    type: 'number', default: 0.55, min: 0, max: 1.5, step: 0.01,
+    unit: '无量纲', digits: 2,
+    label: '薄片扩散增益',
+    hint: '薄壁处光在内部可走更远；增益只作用于光学厚度过渡带内的薄区域。',
+    control: { section: 'diffusionFields', input: 'thinBoostRange', out: 'thinBoostOut' }
+  },
+  quality: {
+    type: 'enum', values: [ 'low', 'med', 'high' ], default: 'med',
+    unit: '—',
+    label: '扩散质量',
+    optionLabels: { low: '低 · 17 采样/轴', med: '中 · 33 采样/轴', high: '高 · 65 采样/轴' },
+    control: { section: 'diffusionFields', select: 'qualitySelect', out: 'pixelRadiusOut' }
+  },
+  objectGate: {
+    type: 'bool', default: true,
+    unit: '—',
+    label: '物体边界硬门控'
+  },
+  depthTol: {
+    type: 'number', default: 0.42, min: 0, max: 1.5, step: 0.01,
+    unit: '无量纲', digits: 2,
+    label: '深度断层容差',
+    control: { section: 'gateFields', input: 'depthTol', out: 'depthTolOut' }
+  },
+  normalTol: {
+    type: 'number', default: 0.82, min: 0.4, max: 0.99, step: 0.01,
+    unit: '无量纲', digits: 2,
+    label: '法线一致性',
+    control: { section: 'gateFields', input: 'normalTol', out: 'normalTolOut' }
+  },
+  modelScale: {
+    type: 'number', default: 1, min: 0.45, max: 2.2, step: 0.01,
+    unit: '×', digits: 2, suffix: '×',
+    label: '模型整体缩放',
+    control: { section: 'sceneFields', input: 'scaleRange', out: 'scaleOut', hintId: 'scaleNote' }
+  },
+  exposure: {
+    type: 'number', default: 1, min: 0.3, max: 2.4, step: 0.01,
+    unit: '×', digits: 2,
+    label: '曝光',
+    control: { section: 'sceneFields', input: 'exposureRange', out: 'exposureOut' }
+  },
+  resolutionScale: {
+    type: 'number', default: 1, min: 0.5, max: 1.75, step: 0.05,
+    unit: '×',
+    label: '预览分辨率'
+  },
+  channel: {
+    type: 'enum', values: [
+      'final', 'surface', 'diffuse', 'specular', 'scatter', 'normalShade',
+      'albedo', 'normal', 'depth', 'thickness', 'mask', 'objectid'
+    ], default: 'final',
+    unit: '—',
+    label: '显示通道',
+    optionLabels: {
+      final: '最终合成',
+      surface: '表面层（关闭散射）',
+      diffuse: '直接漫反射',
+      specular: '直接高光 / 反射',
+      scatter: '扩散光照',
+      normalShade: '法线着色',
+      albedo: '漫反射反照率',
+      normal: '世界法线',
+      depth: '线性深度',
+      thickness: '厚度',
+      mask: '扩散掩码',
+      objectid: '物体 ID'
+    }
+  },
+  preset: {
+    type: 'enum', values: [ 'pale', 'amber', 'rose', 'ivory' ], default: 'pale',
+    unit: '—',
+    label: '蜡材样本'
+  }
 };
 
 export const PRESETS = {
@@ -84,7 +179,9 @@ export function exportState( state ) {
     preset: PRESETS[ state.preset ],
     notes: {
       units: '散射距离与厚度以毫米为单位；模型缩放 1 时 1 世界单位 = 10 mm。',
-      limitation: '可见表面屏幕空间近似：背向表面光传输不参与计算。'
+      thinBandOptical: '薄壳过渡带为光学厚度 0.25–2.5（光学厚度 = 厚度mm ÷ 散射距离mm）。',
+      limitation: '可见表面屏幕空间近似：背向表面光传输不参与计算。',
+      contract: 'docs/model-assumptions.md'
     }
   };
   return payload;

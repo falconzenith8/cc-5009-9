@@ -54,48 +54,8 @@
             <label for="presetSelect">蜡材样本</label>
             <select id="presetSelect"></select>
           </div>
-          <div class="field">
-            <div class="field-label">
-              <label for="distRange">散射距离</label>
-              <output id="distOut">4.5 mm</output>
-            </div>
-            <input type="range" id="distRange" min="0.5" max="20" step="0.1" value="5.2" />
-            <p class="hint">以物理毫米为单位的平均自由程；渲染时按场景尺度换算到世界单位，再投影到屏幕像素。</p>
-          </div>
-          <div class="field">
-            <div class="field-label">
-              <label for="strengthRange">散射强度</label>
-              <output id="strengthOut">1.00</output>
-            </div>
-            <input type="range" id="strengthRange" min="0" max="1" step="0.01" value="0.72" />
-          </div>
-          <div class="field">
-            <div class="field-label">
-              <label for="thicknessRange">厚度响应</label>
-              <output id="thicknessOut">0.72</output>
-            </div>
-            <input type="range" id="thicknessRange" min="0" max="1" step="0.01" value="0.72" />
-            <p class="hint">薄处透光、厚处更乳浊：散射能量与扩散半径都随局部厚度响应。</p>
-          </div>
-          <div class="field">
-            <div class="field-label">
-              <label for="thinBoostRange">薄片扩散增益</label>
-              <output id="thinBoostOut">0.55</output>
-            </div>
-            <input type="range" id="thinBoostRange" min="0" max="1.5" step="0.01" value="0.55" />
-            <p class="hint">薄壁处光在内部可走更远；增益只作用于薄区域。</p>
-          </div>
-          <div class="field">
-            <div class="field-label">
-              <label for="qualitySelect">扩散质量</label>
-              <output id="pixelRadiusOut">半径 — px</output>
-            </div>
-            <select id="qualitySelect">
-              <option value="low">低 · 17 采样/轴</option>
-              <option value="med" selected>中 · 33 采样/轴</option>
-              <option value="high">高 · 65 采样/轴</option>
-            </select>
-          </div>
+          <!-- Slider/select fields are generated from PARAM_SCHEMA (src/state.js). -->
+          <div id="diffusionFields"></div>
         </section>
 
         <section class="block">
@@ -108,20 +68,7 @@
             <input type="checkbox" id="objectGate" checked />
             <span class="switch" aria-hidden="true"></span>
           </label>
-          <div class="field">
-            <div class="field-label">
-              <label for="depthTol">深度断层容差</label>
-              <output id="depthTolOut">0.28</output>
-            </div>
-            <input type="range" id="depthTol" min="0" max="1.5" step="0.01" value="0.42" />
-          </div>
-          <div class="field">
-            <div class="field-label">
-              <label for="normalTol">法线一致性</label>
-              <output id="normalTolOut">0.86</output>
-            </div>
-            <input type="range" id="normalTol" min="0.4" max="0.99" step="0.01" value="0.82" />
-          </div>
+          <div id="gateFields"></div>
           <p class="hint">关闭物体门控可观察金属/背景渗色；开启后相邻但不相连的物体不会串色。</p>
         </section>
 
@@ -129,21 +76,7 @@
           <div class="block-head">
             <h3>场景与尺度</h3>
           </div>
-          <div class="field">
-            <div class="field-label">
-              <label for="scaleRange">模型整体缩放</label>
-              <output id="scaleOut">1.00×</output>
-            </div>
-            <input type="range" id="scaleRange" min="0.45" max="2.2" step="0.01" value="1" />
-            <p class="hint" id="scaleNote">—</p>
-          </div>
-          <div class="field">
-            <div class="field-label">
-              <label for="exposureRange">曝光</label>
-              <output id="exposureOut">1.00</output>
-            </div>
-            <input type="range" id="exposureRange" min="0.3" max="2.2" step="0.01" value="1" />
-          </div>
+          <div id="sceneFields"></div>
           <div class="field">
             <label for="resolutionSelect">预览分辨率</label>
             <select id="resolutionSelect">
@@ -162,20 +95,7 @@
           </div>
           <div class="field">
             <label for="channelSelect">显示通道</label>
-            <select id="channelSelect">
-              <option value="final">最终合成</option>
-              <option value="surface">表面层（关闭散射）</option>
-              <option value="diffuse">直接漫反射</option>
-              <option value="specular">直接高光 / 反射</option>
-              <option value="scatter">扩散光照</option>
-              <option value="irradiance">可见面辐照度</option>
-              <option value="albedo">漫反射反照率</option>
-              <option value="normal">世界法线</option>
-              <option value="depth">线性深度</option>
-              <option value="thickness">厚度</option>
-              <option value="mask">扩散掩码</option>
-              <option value="objectid">物体 ID</option>
-            </select>
+            <select id="channelSelect"></select>
           </div>
           <div class="compare-actions">
             <button id="computeRefBtn" class="btn primary">生成高质量参考</button>
@@ -187,6 +107,15 @@
             <div><span>有效像素</span><strong id="metricPixels">—</strong></div>
           </div>
           <p class="hint">参考实现使用不可分离的二维多点扩散核与双叶扩散剖面；实时路径为可分离双边近似。两者都只使用可见表面。</p>
+        </section>
+
+        <section class="block" id="selfcheckBlock">
+          <div class="block-head">
+            <h3>内核自检</h3>
+            <span class="tag" id="selfcheckTag">…</span>
+          </div>
+          <ul class="selfcheck" id="selfcheckList"></ul>
+          <p class="hint">启动时核对状态参数与散射内核 uniforms 的接线，并用非默认参数实测厚度响应与散射距离单位；任何失败都会在此列出。</p>
         </section>
 
         <section class="block">
@@ -207,7 +136,7 @@
           <div class="block-head">
             <h3>方法边界</h3>
           </div>
-          <p>本方法只使用相机可见表面。背向相机的表面辐照度不会被采集：光从薄片背面射入、内部多次折射后从前表面射出的传输，以及完全被遮挡区域之间的互散射，均不在可见表面屏幕空间近似的表达范围内。厚度通道仅由可见前表面与最近背面之差估计，用于调制能量与散射范围，不构成体积光传输。</p>
+          <p>本方法只使用相机可见表面。背向相机的表面辐照度不会被采集：光从薄片背面射入、内部多次折射后从前表面射出的传输，以及完全被遮挡区域之间的互散射，均不在可见表面屏幕空间近似的表达范围内。厚度通道仅由可见前表面与最近背面之差估计，用于调制能量与散射范围，不构成体积光传输。参数单位与近似适用区间的完整契约见 docs/model-assumptions.md。</p>
         </section>
       </div>
     </aside>

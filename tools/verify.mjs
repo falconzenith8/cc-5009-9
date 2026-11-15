@@ -1,18 +1,11 @@
-import { chromium } from 'playwright';
 import fs from 'node:fs';
+import { launchBrowser } from './lib/browser.mjs';
 
 const URL = 'http://localhost:4173/';
 const OUT = '/workspace/shots/verify';
 fs.mkdirSync( OUT, { recursive: true } );
 
-const browser = await chromium.launch( {
-  args: [
-    '--use-angle=swiftshader',
-    '--enable-unsafe-swiftshader',
-    '--ignore-gpu-blocklist',
-    '--disable-gpu-sandbox'
-  ]
-} );
+const browser = await launchBrowser();
 const page = await browser.newPage( { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 } );
 const errors = [];
 page.on( 'console', ( m ) => { if ( m.type() === 'error' ) errors.push( m.text() ); } );

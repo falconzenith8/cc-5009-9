@@ -373,6 +373,32 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; background: v
 }
 .metrics strong { font-family: var(--mono); font-size: 11px; color: var(--amber); font-weight: 400; }
 
+/* kernel self-check */
+.selfcheck {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 5px;
+}
+.selfcheck li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 10px;
+  line-height: 1.5;
+  color: rgba(240, 231, 216, 0.62);
+  border: 1px solid var(--panel-line);
+  background: rgba(0, 0, 0, 0.22);
+  padding: 6px 9px;
+}
+.selfcheck li > span { font-family: var(--mono); font-size: 10px; }
+.selfcheck li.ok > span { color: var(--sage); }
+.selfcheck li.fail > span { color: var(--coral); }
+.selfcheck li.fail { border-color: rgba(226, 105, 79, 0.4); }
+.selfcheck li b { font-weight: 400; color: rgba(240, 231, 216, 0.85); display: block; }
+.selfcheck li i { font-style: normal; font-family: var(--mono); font-size: 9px; color: var(--text-dim); }
+
 .note p {
   margin: 0;
   font-size: 10.5px;

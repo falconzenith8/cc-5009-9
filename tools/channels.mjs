@@ -1,7 +1,7 @@
-import { chromium } from 'playwright';
 import fs from 'node:fs';
+import { launchBrowser } from './lib/browser.mjs';
 
-const browser = await chromium.launch({ args: ['--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'] });
+const browser = await launchBrowser();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 const logs = [];
 page.on('console', m => { if (m.type() !== 'debug') logs.push(`[${m.type()}] ${m.text()}`); });
