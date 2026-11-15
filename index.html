@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>蜡质散射预览台 · Subsurface Wax Lab</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="view" aria-label="蜡制工艺品实时散射预览"></canvas>
+
+    <header class="masthead">
+      <div class="eyebrow">SUBSURFACE LAB · 05</div>
+      <h1>蜡质次表面散射预览台</h1>
+      <p class="sub">可见表面屏幕空间近似 · 直接反射与可扩散光照分离</p>
+    </header>
+
+    <div class="stage-meta" id="stageMeta">
+      <span class="chip" id="chipBackend">WebGL2 · MRT ×4 · FP16</span>
+      <span class="chip" id="chipRes">— × —</span>
+      <span class="chip" id="chipFps">— fps</span>
+    </div>
+
+    <aside class="panel" id="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-kicker">CONTROL DECK</div>
+          <h2>散射工作台</h2>
+        </div>
+        <button class="icon-btn" id="collapseBtn" title="折叠面板" aria-label="折叠面板">−</button>
+      </div>
+
+      <div class="panel-body" id="panelBody">
+        <section class="block">
+          <div class="block-head">
+            <h3>散射总控</h3>
+            <span class="tag" id="scatterStateTag">ON</span>
+          </div>
+          <label class="switch-row">
+            <span>启用次表面散射</span>
+            <input type="checkbox" id="scatterToggle" checked />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+          <p class="hint">关闭后仅保留表面直接漫反射与高光，用于对照扩散贡献。</p>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <h3>扩散参数</h3>
+            <span class="tag alt" id="kernelTag">world-space</span>
+          </div>
+          <div class="field">
+            <label for="presetSelect">蜡材样本</label>
+            <select id="presetSelect"></select>
+          </div>
+          <div class="field">
+            <div class="field-label">
+              <label for="distRange">散射距离</label>
+              <output id="distOut">4.5 mm</output>
+            </div>
+            <input type="range" id="distRange" min="0.5" max="20" step="0.1" value="5.2" />
+            <p class="hint">以物理毫米为单位的平均自由程；渲染时按场景尺度换算到世界单位，再投影到屏幕像素。</p>
+          </div>
+          <div class="field">
+            <div class="field-label">
+              <label for="strengthRange">散射强度</label>
+              <output id="strengthOut">1.00</output>
+            </div>
+            <input type="range" id="strengthRange" min="0" max="1" step="0.01" value="0.72" />
+          </div>
+          <div class="field">
+            <div class="field-label">
+              <label for="thicknessRange">厚度响应</label>
+              <output id="thicknessOut">0.72</output>
+            </div>
+            <input type="range" id="thicknessRange" min="0" max="1" step="0.01" value="0.72" />
+            <p class="hint">薄处透光、厚处更乳浊：散射能量与扩散半径都随局部厚度响应。</p>
+          </div>
+          <div class="field">
+            <div class="field-label">
+              <label for="thinBoostRange">薄片扩散增益</label>
+              <output id="thinBoostOut">0.55</output>
+            </div>
+            <input type="range" id="thinBoostRange" min="0" max="1.5" step="0.01" value="0.55" />
+            <p class="hint">薄壁处光在内部可走更远；增益只作用于薄区域。</p>
+          </div>
+          <div class="field">
+            <div class="field-label">
+              <label for="qualitySelect">扩散质量</label>
+              <output id="pixelRadiusOut">半径 — px</output>
+            </div>
+            <select id="qualitySelect">
+              <option value="low">低 · 17 采样/轴</option>
+              <option value="med" selected>中 · 33 采样/轴</option>
+              <option value="high">高 · 65 采样/轴</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <h3>跨边界门控</h3>
+            <span class="tag ghost">depth · normal · id</span>
+          </div>
+          <label class="switch-row compact">
+            <span>物体边界硬门控</span>
+            <input type="checkbox" id="objectGate" checked />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+          <div class="field">
+            <div class="field-label">
+              <label for="depthTol">深度断层容差</label>
+              <output id="depthTolOut">0.28</output>
+            </div>
+            <input type="range" id="depthTol" min="0" max="1.5" step="0.01" value="0.42" />
+          </div>
+          <div class="field">
+            <div class="field-label">
+              <label for="normalTol">法线一致性</label>
+              <output id="normalTolOut">0.86</output>
+            </div>
+            <input type="range" id="normalTol" min="0.4" max="0.99" step="0.01" value="0.82" />
+          </div>
+          <p class="hint">关闭物体门控可观察金属/背景渗色；开启后相邻但不相连的物体不会串色。</p>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <h3>场景与尺度</h3>
+          </div>
+          <div class="field">
+            <div class="field-label">
+              <label for="scaleRange">模型整体缩放</label>
+              <output id="scaleOut">1.00×</output>
+            </div>
+            <input type="range" id="scaleRange" min="0.45" max="2.2" step="0.01" value="1" />
+            <p class="hint" id="scaleNote">—</p>
+          </div>
+          <div class="field">
+            <div class="field-label">
+              <label for="exposureRange">曝光</label>
+              <output id="exposureOut">1.00</output>
+            </div>
+            <input type="range" id="exposureRange" min="0.3" max="2.2" step="0.01" value="1" />
+          </div>
+          <div class="field">
+            <label for="resolutionSelect">预览分辨率</label>
+            <select id="resolutionSelect">
+              <option value="0.5">0.5× · 性能</option>
+              <option value="0.75">0.75× · 平衡</option>
+              <option value="1" selected>1.0× · 原生</option>
+              <option value="1.25">1.25× · 细节</option>
+              <option value="1.5">1.5× · 超采样</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <h3>通道与参考</h3>
+          </div>
+          <div class="field">
+            <label for="channelSelect">显示通道</label>
+            <select id="channelSelect">
+              <option value="final">最终合成</option>
+              <option value="surface">表面层（关闭散射）</option>
+              <option value="diffuse">直接漫反射</option>
+              <option value="specular">直接高光 / 反射</option>
+              <option value="scatter">扩散光照</option>
+              <option value="irradiance">可见面辐照度</option>
+              <option value="albedo">漫反射反照率</option>
+              <option value="normal">世界法线</option>
+              <option value="depth">线性深度</option>
+              <option value="thickness">厚度</option>
+              <option value="mask">扩散掩码</option>
+              <option value="objectid">物体 ID</option>
+            </select>
+          </div>
+          <div class="compare-actions">
+            <button id="computeRefBtn" class="btn primary">生成高质量参考</button>
+            <button id="compareBtn" class="btn">实时 / 参考对比</button>
+          </div>
+          <div class="metrics" id="metrics" hidden>
+            <div><span>散射通道 MAE</span><strong id="metricMae">—</strong></div>
+            <div><span>PSNR</span><strong id="metricPsnr">—</strong></div>
+            <div><span>有效像素</span><strong id="metricPixels">—</strong></div>
+          </div>
+          <p class="hint">参考实现使用不可分离的二维多点扩散核与双叶扩散剖面；实时路径为可分离双边近似。两者都只使用可见表面。</p>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <h3>存档</h3>
+            <span class="tag ghost">local + JSON</span>
+          </div>
+          <div class="save-actions">
+            <button id="resetBtn" class="btn">重置参数</button>
+            <button id="saveBtn" class="btn">保存到本地</button>
+            <button id="exportBtn" class="btn">导出 JSON</button>
+            <label class="btn file-btn">导入 JSON<input type="file" id="importInput" accept="application/json" /></label>
+          </div>
+          <p class="hint" id="saveStatus">未保存 · 参数改动不会自动写入本地</p>
+        </section>
+
+        <section class="block note">
+          <div class="block-head">
+            <h3>方法边界</h3>
+          </div>
+          <p>本方法只使用相机可见表面。背向相机的表面辐照度不会被采集：光从薄片背面射入、内部多次折射后从前表面射出的传输，以及完全被遮挡区域之间的互散射，均不在可见表面屏幕空间近似的表达范围内。厚度通道仅由可见前表面与最近背面之差估计，用于调制能量与散射范围，不构成体积光传输。</p>
+        </section>
+      </div>
+    </aside>
+
+    <div class="split-legend" id="splitLegend" hidden>
+      <span>实时近似</span>
+      <i></i>
+      <span>高质量参考</span>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="loader-ring"></div>
+      <div>正在建立多通道散射管线…</div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
